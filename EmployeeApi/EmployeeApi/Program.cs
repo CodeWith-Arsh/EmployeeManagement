@@ -1,4 +1,4 @@
-using Scalar.AspNetCore;
+﻿using Scalar.AspNetCore;
 using EmployeeApi.Data;
 using EmployeeApi.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -38,7 +38,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowAngular");      // ?? must come BEFORE UseAuthorization & MapControllers
+app.UseCors("AllowAngular");      // ⚠️ must come BEFORE UseAuthorization & MapControllers
 
 
 app.UseAuthorization();
