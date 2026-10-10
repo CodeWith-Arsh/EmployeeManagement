@@ -15,10 +15,10 @@ public class EmployeesController : ControllerBase
         _service = service;
     }
 
-    // GET: api/employees
+    // GET: api/employees?search=arsh&department=IT&sortBy=salary&descending=true&pageNumber=1&pageSize=10
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<EmployeeDto>>> GetAll()
-        => Ok(await _service.GetAllAsync());
+    public async Task<ActionResult<PagedResult<EmployeeDto>>> GetAll([FromQuery] EmployeeQueryParameters query)
+        => Ok(await _service.GetPagedAsync(query));
 
     // GET: api/employees/5
     [HttpGet("{id:int}")]

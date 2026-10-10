@@ -16,10 +16,17 @@ public class EmployeeService : IEmployeeService
         _logger = logger;
     }
 
-    public async Task<IEnumerable<EmployeeDto>> GetAllAsync()
+    public async Task<PagedResult<EmployeeDto>> GetPagedAsync(EmployeeQueryParameters query)
     {
-        var employees = await _repository.GetAllAsync();
-        return employees.Select(e => e.ToDto());
+        var (items, totalCount) = await _repository.GetPagedAsync(query);
+
+        return new PagedResult<EmployeeDto>
+        {
+            Items = items.Select(e => e.ToDto()).ToList(),
+            PageNumber = query.PageNumber,
+            PageSize = query.PageSize,
+            TotalCount = totalCount
+        };
     }
 
     public async Task<EmployeeDto> GetByIdAsync(int id)
