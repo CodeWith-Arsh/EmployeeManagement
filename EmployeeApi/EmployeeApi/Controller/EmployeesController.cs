@@ -1,6 +1,5 @@
 ﻿using EmployeeApi.DTOs;
-using EmployeeApi.Models;
-using EmployeeApi.Repositories;
+using EmployeeApi.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EmployeeApi.Controllers;
@@ -9,73 +8,36 @@ namespace EmployeeApi.Controllers;
 [Route("api/[controller]")]
 public class EmployeesController : ControllerBase
 {
-    private readonly IEmployeeRepository _repository;
+    private readonly IEmployeeService _service;
 
-    // Controller depends on the INTERFACE, not on DbContext
-    public EmployeesController(IEmployeeRepository repository)
+    public EmployeesController(IEmployeeService service)
     {
-        _repository = repository;
+        _service = service;
     }
 
     // GET: api/employees
     [HttpGet]
     public async Task<ActionResult<IEnumerable<EmployeeDto>>> GetAll()
-    {
-        var employees = await _repository.GetAllAsync();
-        return Ok(employees.Select(ToDto));
-    }
+        => Ok(await _service.GetAllAsync());
 
     // GET: api/employees/5
     [HttpGet("{id:int}")]
     public async Task<ActionResult<EmployeeDto>> GetById(int id)
-    {
-        var employee = await _repository.GetByIdAsync(id);
-        if (employee is null)
-            return NotFound(new { message = $"Employee with id {id} not found" });
-
-        return Ok(ToDto(employee));
-    }
+        => Ok(await _service.GetByIdAsync(id));
 
     // POST: api/employees
     [HttpPost]
     public async Task<ActionResult<EmployeeDto>> Create(EmployeeRequestDto request)
     {
-        if (await _repository.EmailExistsAsync(request.Email))
-            return Conflict(new { message = "An employee with this email already exists" });
-
-        var employee = new Employee
-        {
-            FirstName = request.FirstName,
-            LastName = request.LastName,
-            Email = request.Email,
-            Department = request.Department,
-            Salary = request.Salary,
-            DateOfJoining = request.DateOfJoining
-        };
-
-        var created = await _repository.AddAsync(employee);
-        return CreatedAtAction(nameof(GetById), new { id = created.Id }, ToDto(created));
+        var created = await _service.CreateAsync(request);
+        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
     // PUT: api/employees/5
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, EmployeeRequestDto request)
     {
-        var employee = await _repository.GetByIdAsync(id);
-        if (employee is null)
-            return NotFound(new { message = $"Employee with id {id} not found" });
-
-        if (await _repository.EmailExistsAsync(request.Email, id))
-            return Conflict(new { message = "Another employee already uses this email" });
-
-        employee.FirstName = request.FirstName;
-        employee.LastName = request.LastName;
-        employee.Email = request.Email;
-        employee.Department = request.Department;
-        employee.Salary = request.Salary;
-        employee.DateOfJoining = request.DateOfJoining;
-
-        await _repository.UpdateAsync(employee);
+        await _service.UpdateAsync(id, request);
         return NoContent();
     }
 
@@ -83,22 +45,7 @@ public class EmployeesController : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var employee = await _repository.GetByIdAsync(id);
-        if (employee is null)
-            return NotFound(new { message = $"Employee with id {id} not found" });
-
-        await _repository.DeleteAsync(employee);
+        await _service.DeleteAsync(id);
         return NoContent();
     }
-
-    private static EmployeeDto ToDto(Employee e) => new()
-    {
-        Id = e.Id,
-        FirstName = e.FirstName,
-        LastName = e.LastName,
-        Email = e.Email,
-        Department = e.Department,
-        Salary = e.Salary,
-        DateOfJoining = e.DateOfJoining
-    };
 }
