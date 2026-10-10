@@ -3,8 +3,11 @@ using EmployeeApi.Data;
 using EmployeeApi.Repositories;
 using Microsoft.EntityFrameworkCore;
 using EmployeeApi.Services;
+using EmployeeApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ================= SERVICES (Dependency Injection) =================
 builder.Services.AddControllers();
 
 // Add services to the container.   
@@ -13,6 +16,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? [];
 
@@ -30,6 +35,8 @@ builder.Services.AddCors(options =>
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+// ================= MIDDLEWARE PIPELINE (order matters!) =================
+app.UseExceptionHandler();        // FIRST, so it wraps everything after it
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -40,7 +47,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowAngular");      // ⚠️ must come BEFORE UseAuthorization & MapControllers
+app.UseCors("AllowAngular");      //  must come BEFORE UseAuthorization & MapControllers
 
 
 app.UseAuthorization();
