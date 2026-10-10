@@ -1,0 +1,106 @@
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white">
+        <h4 class="mb-0">{{ isEditMode ? 'Edit Employee' : 'Add Employee' }}</h4>
+      </div>
+
+      <div class="card-body">
+        @if (loading()) {
+          <div class="text-center my-4"><div class="spinner-border text-primary"></div></div>
+        } @else {
+          @if (errorMessage()) {
+            <div class="alert alert-danger">{{ errorMessage() }}</div>
+          }
+
+          <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+            <div class="row g-3">
+
+              <!-- First name -->
+              <div class="col-md-6">
+                <label class="form-label">First Name *</label>
+                <input type="text" class="form-control" formControlName="firstName"
+                       [class.is-invalid]="isInvalid('firstName')">
+                @if (isInvalid('firstName')) {
+                  <div class="invalid-feedback">
+                    @if (form.controls.firstName.hasError('required')) { First name is required. }
+                    @if (form.controls.firstName.hasError('maxlength')) { Max 50 characters. }
+                  </div>
+                }
+              </div>
+
+              <!-- Last name -->
+              <div class="col-md-6">
+                <label class="form-label">Last Name *</label>
+                <input type="text" class="form-control" formControlName="lastName"
+                       [class.is-invalid]="isInvalid('lastName')">
+                @if (isInvalid('lastName')) {
+                  <div class="invalid-feedback">
+                    @if (form.controls.lastName.hasError('required')) { Last name is required. }
+                    @if (form.controls.lastName.hasError('maxlength')) { Max 50 characters. }
+                  </div>
+                }
+              </div>
+
+              <!-- Email -->
+              <div class="col-md-6">
+                <label class="form-label">Email *</label>
+                <input type="email" class="form-control" formControlName="email"
+                       [class.is-invalid]="isInvalid('email')">
+                @if (isInvalid('email')) {
+                  <div class="invalid-feedback">
+                    @if (form.controls.email.hasError('required')) { Email is required. }
+                    @if (form.controls.email.hasError('email')) { Enter a valid email. }
+                  </div>
+                }
+              </div>
+
+              <!-- Department -->
+              <div class="col-md-6">
+                <label class="form-label">Department *</label>
+                <select class="form-select" formControlName="department"
+                        [class.is-invalid]="isInvalid('department')">
+                  <option value="" disabled>-- Select --</option>
+                  @for (dept of departments; track dept) {
+                    <option [value]="dept">{{ dept }}</option>
+                  }
+                </select>
+                @if (isInvalid('department')) {
+                  <div class="invalid-feedback">Please select a department.</div>
+                }
+              </div>
+
+              <!-- Salary -->
+              <div class="col-md-6">
+                <label class="form-label">Salary (₹) *</label>
+                <input type="number" class="form-control" formControlName="salary"
+                       [class.is-invalid]="isInvalid('salary')">
+                @if (isInvalid('salary')) {
+                  <div class="invalid-feedback">Salary must be between 0 and 1,00,00,000.</div>
+                }
+              </div>
+
+              <!-- Date of joining -->
+              <div class="col-md-6">
+                <label class="form-label">Date of Joining *</label>
+                <input type="date" class="form-control" formControlName="dateOfJoining"
+                       [class.is-invalid]="isInvalid('dateOfJoining')">
+                @if (isInvalid('dateOfJoining')) {
+                  <div class="invalid-feedback">Date of joining is required.</div>
+                }
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <a routerLink="/employees" class="btn btn-outline-secondary">Cancel</a>
+              <button type="submit" class="btn btn-primary" [disabled]="saving()">
+                @if (saving()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                {{ isEditMode ? 'Update' : 'Save' }}
+              </button>
+            </div>
+          </form>
+        }
+      </div>
+    </div>
+  </div>
+</div>
