@@ -3,45 +3,102 @@
   <a routerLink="/employees/add" class="btn btn-primary">+ Add Employee</a>
 </div>
 
-@if (loading()) {
+<!-- ========== Toolbar ========== -->
+<div class="row g-2 mb-3">
+  <div class="col-md-5">
+    <input #searchBox type="search" class="form-control"
+           placeholder="Search by name or email..."
+           (input)="onSearch(searchBox.value)">
+  </div>
+
+  <div class="col-md-3">
+    <select #deptSelect class="form-select" (change)="onDepartmentChange(deptSelect.value)">
+      <option value="" [selected]="department() === ''">All departments</option>
+      @for (d of departments; track d) {
+        <option [value]="d" [selected]="d === department()">{{ d }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="col-md-2">
+    <select #sizeSelect class="form-select" (change)="onPageSizeChange(sizeSelect.value)">
+      @for (size of pageSizeOptions; track size) {
+        <option [value]="size" [selected]="size === pageSize()">{{ size }} / page</option>
+      }
+    </select>
+  </div>
+
+  <div class="col-md-2 d-grid">
+    <button class="btn btn-outline-secondary"
+            (click)="searchBox.value = ''; clearFilters()">Clear</button>
+  </div>
+</div>
+
+<!-- ========== Content ========== -->
+@if (errorMessage()) {
+  <div class="alert alert-danger">{{ errorMessage() }}</div>
+}
+
+@if (!result() && loading()) {
   <div class="text-center my-5">
     <div class="spinner-border text-primary"></div>
     <p class="mt-2">Loading employees...</p>
   </div>
-} @else if (errorMessage()) {
-  <div class="alert alert-danger">{{ errorMessage() }}</div>
-} @else if (employees().length === 0) {
-  <div class="alert alert-info">No employees found. Click "Add Employee" to create one.</div>
-} @else {
-  <div class="table-responsive">
-    <table class="table table-striped table-hover align-middle">
-      <thead class="table-dark">
-        <tr>
-          <th>#</th>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Department</th>
-          <th class="text-end">Salary</th>
-          <th>Joined</th>
-          <th class="text-center">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (emp of employees(); track emp.id) {
+} @else if (result(); as r) {
+  @if (r.totalCount === 0) {
+    <div class="alert alert-info">No employees match your filters.</div>
+  } @else {
+    <div class="table-responsive" [class.opacity-50]="loading()">
+      <table class="table table-striped table-hover align-middle">
+        <thead class="table-dark">
           <tr>
-            <td>{{ emp.id }}</td>
-            <td>{{ emp.firstName }} {{ emp.lastName }}</td>
-            <td>{{ emp.email }}</td>
-            <td><span class="badge bg-secondary">{{ emp.department }}</span></td>
-            <td class="text-end">{{ emp.salary | currency:'INR' }}</td>
-            <td>{{ emp.dateOfJoining | date:'dd MMM yyyy' }}</td>
-            <td class="text-center">
-              <a [routerLink]="['/employees/edit', emp.id]" class="btn btn-sm btn-outline-warning me-2">Edit</a>
-              <button (click)="deleteEmployee(emp)" class="btn btn-sm btn-outline-danger">Delete</button>
-            </td>
+            <th>#</th>
+            <th class="sortable" (click)="onSort('firstName')">Name {{ sortIcon('firstName') }}</th>
+            <th class="sortable" (click)="onSort('email')">Email {{ sortIcon('email') }}</th>
+            <th class="sortable" (click)="onSort('department')">Department {{ sortIcon('department') }}</th>
+            <th class="sortable text-end" (click)="onSort('salary')">Salary {{ sortIcon('salary') }}</th>
+            <th class="sortable" (click)="onSort('dateOfJoining')">Joined {{ sortIcon('dateOfJoining') }}</th>
+            <th class="text-center">Actions</th>
           </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          @for (emp of r.items; track emp.id) {
+            <tr>
+              <td>{{ emp.id }}</td>
+              <td>{{ emp.firstName }} {{ emp.lastName }}</td>
+              <td>{{ emp.email }}</td>
+              <td><span class="badge bg-secondary">{{ emp.department }}</span></td>
+              <td class="text-end">{{ emp.salary | currency:'INR' }}</td>
+              <td>{{ emp.dateOfJoining | date:'dd MMM yyyy' }}</td>
+              <td class="text-center">
+                <a [routerLink]="['/employees/edit', emp.id]" class="btn btn-sm btn-outline-warning me-2">Edit</a>
+                <button (click)="deleteEmployee(emp)" class="btn btn-sm btn-outline-danger">Delete</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ========== Pagination ========== -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <small class="text-muted">{{ rangeText() }}</small>
+
+      <nav aria-label="Employee pages">
+        <ul class="pagination mb-0">
+          <li class="page-item" [class.disabled]="!r.hasPrevious">
+            <button class="page-link" (click)="goToPage(r.pageNumber - 1)">&laquo;</button>
+          </li>
+          @for (p of pages(); track p) {
+            <li class="page-item" [class.active]="p === r.pageNumber">
+              <button class="page-link" (click)="goToPage(p)">{{ p }}</button>
+            </li>
+          }
+          <li class="page-item" [class.disabled]="!r.hasNext">
+            <button class="page-link" (click)="goToPage(r.pageNumber + 1)">&raquo;</button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  }
 }

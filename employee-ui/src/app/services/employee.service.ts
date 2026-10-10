@@ -1,18 +1,27 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Employee, EmployeeRequest } from '../models/employee';
+import { Employee, EmployeeQuery, EmployeeRequest, PagedResult } from '../models/employee';
 
 @Injectable({ providedIn: 'root' })   // one shared instance for the whole app (singleton)
 export class EmployeeService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/employees`;
 
-  // GET api/employees
-  getAll(): Observable<Employee[]> {
-    return this.http.get<Employee[]>(this.apiUrl);
-  }
+// GET api/employees?search=...&department=...&sortBy=...&pageNumber=...
+getAll(query: EmployeeQuery = {}): Observable<PagedResult<Employee>> {
+  let params = new HttpParams();
+
+  // Only send parameters that have a value
+  Object.entries(query).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      params = params.set(key, String(value));
+    }
+  });
+
+  return this.http.get<PagedResult<Employee>>(this.apiUrl, { params });
+}
 
   // GET api/employees/5
   getById(id: number): Observable<Employee> {
