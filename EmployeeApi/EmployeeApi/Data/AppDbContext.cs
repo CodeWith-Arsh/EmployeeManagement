@@ -10,6 +10,7 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<Employee> Employees { get; set; }
+    public DbSet<User> Users { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -19,5 +20,8 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Employee>()
             .HasIndex(e => e.Email)
             .IsUnique();
+        modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
+        modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
     }
+
 }

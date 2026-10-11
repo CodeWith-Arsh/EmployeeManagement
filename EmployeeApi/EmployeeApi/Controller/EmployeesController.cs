@@ -1,11 +1,15 @@
 ﻿using EmployeeApi.DTOs;
 using EmployeeApi.Services;
 using Microsoft.AspNetCore.Mvc;
+using EmployeeApi.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EmployeeApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]                                  //  must be logged in
+
 public class EmployeesController : ControllerBase
 {
     private readonly IEmployeeService _service;
@@ -27,6 +31,7 @@ public class EmployeesController : ControllerBase
 
     // POST: api/employees
     [HttpPost]
+    [Authorize(Roles = Roles.Admin)]
     public async Task<ActionResult<EmployeeDto>> Create(EmployeeRequestDto request)
     {
         var created = await _service.CreateAsync(request);
@@ -35,6 +40,7 @@ public class EmployeesController : ControllerBase
 
     // PUT: api/employees/5
     [HttpPut("{id:int}")]
+    [Authorize(Roles = Roles.Admin)]
     public async Task<IActionResult> Update(int id, EmployeeRequestDto request)
     {
         await _service.UpdateAsync(id, request);
@@ -43,6 +49,7 @@ public class EmployeesController : ControllerBase
 
     // DELETE: api/employees/5
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = Roles.Admin)]
     public async Task<IActionResult> Delete(int id)
     {
         await _service.DeleteAsync(id);
