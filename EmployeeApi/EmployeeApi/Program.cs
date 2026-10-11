@@ -5,6 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using EmployeeApi.Services;
 using EmployeeApi.Middleware;
 using EmployeeApi.Settings;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +26,31 @@ builder.Services.AddOptions<JwtOptions>()
     .Bind(builder.Configuration.GetSection("Jwt"))
     .Validate(o => o.Key.Length >= 32, "Jwt:Key must be at least 32 characters (set it in User Secrets)")
     .ValidateOnStart();
+
+// ================= AUTHENTICATION (validate incoming JWTs) =================
+var jwt = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()!;
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwt.Issuer,                 // must be "EmployeeApi"
+
+            ValidateAudience = true,
+            ValidAudience = jwt.Audience,             // must be "EmployeeUi"
+
+            ValidateIssuerSigningKey = true,          // signature must match OUR key
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key)),
+
+            ValidateLifetime = true,                  // reject expired tokens
+            ClockSkew = TimeSpan.FromMinutes(1)       // small tolerance for clock differences
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -61,7 +89,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors("AllowAngular");      //  must come BEFORE UseAuthorization & MapControllers
 
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
