@@ -4,6 +4,7 @@ using EmployeeApi.Repositories;
 using Microsoft.EntityFrameworkCore;
 using EmployeeApi.Services;
 using EmployeeApi.Middleware;
+using EmployeeApi.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,17 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+
+// JWT settings – validated at startup so a missing key fails fast
+builder.Services.AddOptions<JwtOptions>()
+    .Bind(builder.Configuration.GetSection("Jwt"))
+    .Validate(o => o.Key.Length >= 32, "Jwt:Key must be at least 32 characters (set it in User Secrets)")
+    .ValidateOnStart();
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddSingleton<ITokenService, TokenService>();
+
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
